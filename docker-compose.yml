@@ -1,0 +1,56 @@
+version: '3.3'
+services:
+  selenium-hub:
+    image: selenium/hub:3.141.59-yttrium
+    container_name: selenium-hub
+    ports:
+      - "4444:4444"
+    expose: 
+      - 4444
+  chrome:
+    image: selenium/node-chrome-debug:3.141.59-yttrium
+    container_name: chrome
+    ports:
+      - "5900:5900"
+    volumes:
+      - /dev/shm:/dev/shm
+    depends_on:
+      - selenium-hub
+    environment:
+      - HUB_HOST=selenium-hub
+      - HUB_PORT=4444
+  firefox:
+    image: selenium/node-firefox:3.141.59-yttrium
+    container_name: firefox
+    volumes:
+      - /dev/shm:/dev/shm
+    depends_on:
+      - selenium-hub
+    environment:
+      - HUB_HOST=selenium-hub
+      - HUB_PORT=4444
+  testing-server:
+    container_name: testing-server
+    image: testing-server
+    build: 
+      dockerfile: Dockerfile
+      context: .   
+    volumes:  
+      - ./target:/target  
+    depends_on: 
+      - ozap  
+      - selenium-hub
+      - chrome
+      - firefox
+  ozap:
+    container_name: zap
+    image: owasp/zap2docker-stable:latest
+    container_name: zap
+    command: zap.sh -daemon -port 8080 -host 0.0.0.0 -config api.disablekey=true -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true
+    ports:
+      - "8080:8080"
+    expose: 
+      - 8080
+      
+        
+    
